@@ -64,22 +64,6 @@ module.exports = function(app, conn, upload) {
     });
   });
 
-/*Form comment 데이터 DB INSERT* 1129 수정*/
-router.post('/comment', (req,res) => {
-  var comment = req.body.comment;
-  var articleid = req.body.articleid;
-  var sql = 'INSERT INTO comment (`articleid`, `comment`, `inserted`) VALUES( ?, ?, now())';
-  conn.query(sql, [comment, articleid], function(err, result, fields) {
-    if(err){
-      console.log(err);
-      res. status(500).send('Internal Server Error' + err);
-    } else {
-      res.redirect('/news/' + articleid);
-    }
-  });
-});
-
-
   /* 수정 */
   router.get('/:id/edit', (req, res) => {
     var id = req.params.id;
@@ -168,23 +152,41 @@ router.post('/comment', (req,res) => {
       if(err){
         console.log(err);
         res.status(500).send('Internal Server Error: ' + err);
+
       } else {
-        /*여기 수정*/
-        var sql = "SELECT * FROM comment WHERE articleid = ? ";
-        conn.query(sql, [id], function(err, commentlist, fields){
+        var commentSql = "SELECT * FROM comment WHERE article_id = ?";
+        conn.query(commentSql, [id], function(err, comments, fields){
           if(err){
             console.log(err);
             res.status(500).send('Internal Server Error: ' + err);
           } else {
             res.render('news/detail', {
               news: news[0],
-              comments: commentlist, /*여기 수정*/
-          });
-        }
-      });
-    }
+              comments: comments
+            });
+          }
+        });
+      }
+    });
   });
-});
+
+  /* COMMENT 데이터 DB INSERT */
+  router.post('/:id/comment', (req, res) => {
+    var articleId = req.params.id;
+    var author = req.body.author;
+    var desc = req.body.desc;
+    
+    var sql = 'INSERT INTO comment (`article_id`, `author`, `desc`, `inserted`) VALUES(?, ?, ?, now())';
+    conn.query(sql, [articleId, author, desc], function(err, result, fields){
+      if(err){
+        console.log(err);
+        res.status(500).send('Internal Server Error: ' + err);
+      } else {
+        res.redirect('/news/' + articleId);
+      }
+    });
+  });
+
 
   return router;
 };
